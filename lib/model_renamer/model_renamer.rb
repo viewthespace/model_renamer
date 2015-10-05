@@ -2,16 +2,23 @@
 # Uses VariationsGenerator output to first change all the occurences of the model name in the files,
 # then to create new directories and rename files. Then uses MigrationGenerator to create a migration
 #
-class ModelRenamerRunner
+class ModelRenamer
 
   def initialize old_name, new_name
     @variations_generator = VariationsGenerator.new(old_name, new_name)
   end
 
-  def replace_and_generate_migration
+  def rename_and_generate_migrations
+    rename
+    generate_migrations
+  end
+
+  def rename
     replace_all_occurrences
-    # Taken out for initial release
-    # MigrationGenerator.new(@variations_generator.underscore_variations).create_migration_file
+  end
+
+  def generate_migrations
+    MigrationGenerator.new(@variations_generator.underscore_variations).create_migration_file
   end
 
   private
