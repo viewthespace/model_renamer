@@ -23,17 +23,17 @@ Or install it yourself as:
 Run rails console and use the following command:
 
 ```ruby
-ModelRenamer.new("OldName", "NewName").rename_and_generate_migrations
+Rename.new("OldName", "NewName").rename_and_generate_migrations
 ```
 
 This will rename everything in the codebase as well as generate the migrations. If you only want to rename in the codebase, run:
 
 ```ruby
-ModelRenamer.new("OldName", "NewName").rename
+Rename.new("OldName", "NewName").rename
 ```
 
 To only generate migrations, you guessed it:
 
 ```ruby
-ModelRenamer.new("OldName", "NewName").generate_migrations
+Rename.new("OldName", "NewName").generate_migrations
 ```
