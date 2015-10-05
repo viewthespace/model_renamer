@@ -8,9 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = ModelRenamer::VERSION
   spec.authors       = ["Paul Gut"]
   spec.email         = ["pg@vts.com"]
-  spec.homepage      = "https://rubygems.org/gems/model_renamer"
-  spec.summary       = "Renames any model"
-  spec.description   = "A gem that renames your ActiveRecord models and generates corresponding migrations"
+  spec.homepage      = "https://github.com/viewthespace/model_renamer"
+  spec.summary       = "Renames any ActiveRecord model and generates database migrations"
+  spec.description   = "The model renamer gem allows you to rename any a model in your rails application. The gem looks for occurrences of any variation or pluralization of the old model name and changes it to the corresponding variation of the new name. It also generates database migrations that rename tables and foreign keys referencing the old name."
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
