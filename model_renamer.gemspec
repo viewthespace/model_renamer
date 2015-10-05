@@ -8,8 +8,9 @@ Gem::Specification.new do |spec|
   spec.version       = ModelRenamer::VERSION
   spec.authors       = ["Paul Gut"]
   spec.email         = ["pg@vts.com"]
-
-  spec.summary       = "A gem that renames your ActiveRecord models and generates corresponding migrations"
+  spec.homepage      = "https://rubygems.org/gems/model_renamer"
+  spec.summary       = "Renames any model"
+  spec.description       = "A gem that renames your ActiveRecord models and generates corresponding migrations"
   spec.license       = "MIT"
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
@@ -21,8 +22,7 @@ Gem::Specification.new do |spec|
   end
 
   spec.files         = `git ls-files -z`.split("\x0").reject { |f| f.match(%r{^(test|spec|features)/}) }
-  spec.bindir        = "exe"
-  spec.executables   = spec.files.grep(%r{^exe/}) { |f| File.basename(f) }
+  spec.executables   = ["model_renamer"]
   spec.require_paths = ["lib"]
 
   spec.add_development_dependency "bundler", "~> 1.9"

@@ -10,7 +10,8 @@ class ModelRenamerRunner
 
   def replace_and_generate_migration
     replace_all_occurrences
-    MigrationGenerator.new(@variations_generator.underscore_variations).create_migration_file
+    # Taken out for initial release
+    # MigrationGenerator.new(@variations_generator.underscore_variations).create_migration_file
   end
 
   private
