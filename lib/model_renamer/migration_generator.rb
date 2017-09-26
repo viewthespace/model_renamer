@@ -11,7 +11,7 @@ class MigrationGenerator
   end
 
   def create_migration_file
-    path = Rails::Generators.invoke("active_record:migration", [migration_name])[1]
+    path = Rails::Generators.invoke("active_record:migration", [migration_name])[0]
     File.write(path, migration_file_content)
   end
 
