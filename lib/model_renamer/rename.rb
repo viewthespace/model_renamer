@@ -45,7 +45,7 @@ class Rename
       'js', 'coffee', 'hamlc', 'skim', 'erb',
       'sass', 'scss', 'css', 'rb', 'slim',
       'haml', 'rabl', 'html', 'txt', 'feature',
-      'rake', 'json', 'sh', 'yaml'
+      'rake', 'json', 'sh', 'yaml', 'sql'
     ].include? path.split('.').last
   end
 
