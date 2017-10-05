@@ -1,5 +1,2 @@
-source 'https://rubygems.org'
-
-gem 'activerecord'
-gem 'activesupport'
-gem 'rails'
+source "https://rubygems.org"
+gemspec
