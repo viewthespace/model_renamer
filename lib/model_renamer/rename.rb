@@ -10,8 +10,9 @@ class Rename
     'rake', 'json', 'sh', 'yaml', 'sql', 'yml', 'csv'
   ].map(&:freeze)
 
-  def initialize old_name, new_name
+  def initialize old_name, new_name, opts = {}
     @variations_generator = VariationsGenerator.new(old_name, new_name)
+    @opts = opts
   end
 
   def rename_and_generate_migrations
@@ -42,12 +43,18 @@ class Rename
 
   def all_filepaths
     Find.find('.').to_a.reject do |path|
-      FileTest.directory?(path) || !acceptable_filetype?(path)
+      FileTest.directory?(path) || !acceptable_filetype?(path) || ignore_file?(path)
     end
   end
 
   def acceptable_filetype? path
     ACCEPTABLE_FILE_TYPES.include? path.split('.').last
+  end
+
+  def ignore_file? path
+    Array(@opts[:ignore_paths]).any? do |ignore_path|
+      path.include? ignore_path
+    end
   end
 
   def replace_all_variations_in_file filepath

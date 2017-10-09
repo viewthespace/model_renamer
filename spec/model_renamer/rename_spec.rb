@@ -191,4 +191,59 @@ describe Rename do
       expect(File.read('./config/locales/views/account_manager.en-us.yml')).to eq(account_manager_translation_yml_content)
     end
   end
+
+  describe 'options hash' do
+    def client_company_migration_content
+      <<~HEREDOC
+        class AddClientCompanyToDeals < ActiveRecord::Migration
+          def change
+            add_column :activity_logs, :client_company_id, :integer
+          end
+        end
+      HEREDOC
+    end
+
+    def account_migration_content
+      <<~HEREDOC
+        class AddAccountToDeals < ActiveRecord::Migration
+          def change
+            add_column :activity_logs, :account_id, :integer
+          end
+        end
+      HEREDOC
+    end
+
+    before do
+      FileUtils.mkdir_p './db/migrate'
+      File.open('./db/migrate/add_client_company_to_deals.rb', 'w') { |f| f.write client_company_migration_content }
+    end
+
+    context 'when no options are passed in' do
+      before do
+        Rename.new('ClientCompany', 'Account').rename
+      end
+
+      it 'renames client_company to account' do
+        expect(File.exist?('./db/migrate/add_account_to_deals.rb')).to be true
+        expect(File.read('./db/migrate/add_account_to_deals.rb')).to eq(account_migration_content)
+      end
+    end
+
+    context 'when ignore paths options are passed in' do
+      let(:ignore_paths) do
+        {
+          ignore_paths: ['db/migrate']
+        }
+      end
+
+      before do
+        Rename.new('ClientCompany', 'Account', ignore_paths).rename
+      end
+
+      it 'does not touch the files in the ignore paths' do
+        expect(File.exist?('./db/migrate/add_client_company_to_deals.rb')).to be true
+        expect(File.read('./db/migrate/add_client_company_to_deals.rb')).to eq(client_company_migration_content)
+      end
+    end
+  end
 end
