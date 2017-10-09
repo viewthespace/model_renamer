@@ -3,6 +3,12 @@
 # then to create new directories and rename files. Then uses MigrationGenerator to create a migration
 #
 class Rename
+  ACCEPTABLE_FILE_TYPES = [
+    'js', 'coffee', 'hamlc', 'skim', 'erb',
+    'sass', 'scss', 'css', 'rb', 'slim',
+    'haml', 'rabl', 'html', 'txt', 'feature',
+    'rake', 'json', 'sh', 'yaml', 'sql', 'yml', 'csv'
+  ].map(&:freeze)
 
   def initialize old_name, new_name
     @variations_generator = VariationsGenerator.new(old_name, new_name)
@@ -41,12 +47,7 @@ class Rename
   end
 
   def acceptable_filetype? path
-    [
-      'js', 'coffee', 'hamlc', 'skim', 'erb',
-      'sass', 'scss', 'css', 'rb', 'slim',
-      'haml', 'rabl', 'html', 'txt', 'feature',
-      'rake', 'json', 'sh', 'yaml', 'sql'
-    ].include? path.split('.').last
+    ACCEPTABLE_FILE_TYPES.include? path.split('.').last
   end
 
   def replace_all_variations_in_file filepath

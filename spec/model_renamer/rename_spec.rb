@@ -134,17 +134,41 @@ describe Rename do
       HEREDOC
     end
 
+    def client_company_manager_translation_yml_content
+      <<~HEREDOC
+        en-us:
+          views:
+            client_company_manager:
+              tenant_dedupe:
+                tenant_dedupe_tool: Tenant Dedupe Tool
+                potential_duplicates: Potential Duplicates
+      HEREDOC
+    end
+
+    def account_manager_translation_yml_content
+      <<~HEREDOC
+        en-us:
+          views:
+            account_manager:
+              tenant_dedupe:
+                tenant_dedupe_tool: Tenant Dedupe Tool
+                potential_duplicates: Potential Duplicates
+      HEREDOC
+    end
+
     before do
       FileUtils.mkdir_p './app/models'
       FileUtils.mkdir_p './app/controllers'
       FileUtils.mkdir_p './app/services/client_company_manager'
       FileUtils.mkdir_p './app/assets/javascripts/horse/services/client-company-manager'
+      FileUtils.mkdir_p './config/locales/views'
 
       File.open('./app/models/client_company.rb', 'w') { |f| f.write client_company_model_content }
       File.open('./app/models/client_company_user.rb', 'w') { |f| f.write client_company_user_model_content }
       File.open('./app/controllers/client_companies_controller.rb', 'w') { |f| f.write client_company_controller_content }
       File.open('./app/services/client_company_manager/import_users_service.rb', 'w') { |f| f.write client_company_manager_import_users_service_content }
       File.open('./app/assets/javascripts/horse/services/client-company-manager/client-company-service.js', 'w') { |f| f.write client_company_service_js_content }
+      File.open('./config/locales/views/client_company_manager.en-us.yml', 'w') { |f| f.write client_company_manager_translation_yml_content }
 
       Rename.new("ClientCompany", "Account").rename
     end
@@ -155,6 +179,7 @@ describe Rename do
       expect(File.exists?('./app/controllers/accounts_controller.rb')).to be true
       expect(File.exists?('./app/services/account_manager/import_users_service.rb')).to be true
       expect(File.exists?('./app/assets/javascripts/horse/services/account-manager/account-service.js')).to be true
+      expect(File.exists?('./config/locales/views/account_manager.en-us.yml')).to be true
     end
 
     it 'changes ClientCompany to Account' do
@@ -163,6 +188,7 @@ describe Rename do
       expect(File.read('./app/controllers/accounts_controller.rb')).to eq(account_controller_content)
       expect(File.read('./app/services/account_manager/import_users_service.rb')).to eq(account_manager_import_users_service_content)
       expect(File.read('./app/assets/javascripts/horse/services/account-manager/account-service.js')).to eq(account_service_js_content)
+      expect(File.read('./config/locales/views/account_manager.en-us.yml')).to eq(account_manager_translation_yml_content)
     end
   end
 end
