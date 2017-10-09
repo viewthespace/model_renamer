@@ -174,12 +174,12 @@ describe Rename do
     end
 
     it 'renames the file' do
-      expect(File.exists?('./app/models/account.rb')).to be true
-      expect(File.exists?('./app/models/account_user.rb')).to be true
-      expect(File.exists?('./app/controllers/accounts_controller.rb')).to be true
-      expect(File.exists?('./app/services/account_manager/import_users_service.rb')).to be true
-      expect(File.exists?('./app/assets/javascripts/horse/services/account-manager/account-service.js')).to be true
-      expect(File.exists?('./config/locales/views/account_manager.en-us.yml')).to be true
+      expect(File.exist?('./app/models/account.rb')).to be true
+      expect(File.exist?('./app/models/account_user.rb')).to be true
+      expect(File.exist?('./app/controllers/accounts_controller.rb')).to be true
+      expect(File.exist?('./app/services/account_manager/import_users_service.rb')).to be true
+      expect(File.exist?('./app/assets/javascripts/horse/services/account-manager/account-service.js')).to be true
+      expect(File.exist?('./config/locales/views/account_manager.en-us.yml')).to be true
     end
 
     it 'changes ClientCompany to Account' do
