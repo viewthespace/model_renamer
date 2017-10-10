@@ -3,7 +3,12 @@ describe Rename do
     MemFs.activate { example.run }
   end
 
-  describe '#rename' do
+  before(:all) do
+    # Need this because MemFs doesn't behave properly with Dir['./*'] but works fine with Dir['/*']
+    Rename::DEFAULT_PATH = ''
+  end
+
+  describe '#run' do
     let(:client_company_model_content) do
       <<~HEREDOC
         class ClientCompany
@@ -155,8 +160,12 @@ describe Rename do
                 potential_duplicates: Potential Duplicates
       HEREDOC
     end
+    let(:migration_generator_mock) { instance_double(MigrationGenerator) }
 
     before do
+      expect(migration_generator_mock).to receive(:create_migration_file)
+      expect(MigrationGenerator).to receive(:new).and_return(migration_generator_mock)
+
       FileUtils.mkdir_p './app/models'
       FileUtils.mkdir_p './app/controllers'
       FileUtils.mkdir_p './app/services/client_company_manager'
@@ -170,7 +179,7 @@ describe Rename do
       File.open('./app/assets/javascripts/horse/services/client-company-manager/client-company-service.js', 'w') { |f| f.write client_company_service_js_content }
       File.open('./config/locales/views/client_company_manager.en-us.yml', 'w') { |f| f.write client_company_manager_translation_yml_content }
 
-      Rename.new("ClientCompany", "Account").rename
+      Rename.new("ClientCompany", "Account").run
     end
 
     it 'renames the directories' do
@@ -217,32 +226,23 @@ describe Rename do
         end
       HEREDOC
     end
+    let(:migration_generator_mock) { instance_double(MigrationGenerator) }
 
     before do
+      expect(migration_generator_mock).to receive(:create_migration_file)
+      expect(MigrationGenerator).to receive(:new).and_return(migration_generator_mock)
+
       FileUtils.mkdir_p './db/migrate'
       File.open('./db/migrate/add_client_company_to_deals.rb', 'w') { |f| f.write client_company_migration_content }
     end
 
-    context 'when no options are passed in' do
-      before do
-        Rename.new('ClientCompany', 'Account').rename
-      end
-
-      it 'renames client_company to account' do
-        expect(File.exist?('./db/migrate/add_account_to_deals.rb')).to be true
-        expect(File.read('./db/migrate/add_account_to_deals.rb')).to eq(account_migration_content)
-      end
-    end
-
     context 'when ignore paths options are passed in' do
       let(:ignore_paths) do
-        {
-          ignore_paths: ['db/migrate']
-        }
+        ['db/migrate']
       end
 
       before do
-        Rename.new('ClientCompany', 'Account', ignore_paths).rename
+        Rename.new('ClientCompany', 'Account', ignore_paths: ignore_paths).run
       end
 
       it 'does not touch the files in the ignore paths' do
@@ -250,91 +250,105 @@ describe Rename do
         expect(File.read('./db/migrate/add_client_company_to_deals.rb')).to eq(client_company_migration_content)
       end
     end
+  end
 
-    describe '#rename_files' do
-      let(:client_company_content) do
-        <<~DOC
-          class ClientCompany
-            def initialize
-              @client_company = ClientCompany.new
-            end
+  describe '#rename_files' do
+    let(:client_company_content) do
+      <<~DOC
+        class ClientCompany
+          def initialize
+            @client_company = ClientCompany.new
           end
-        DOC
-      end
-      let(:other_content) { 'other' }
-      let(:foo_content) { 'client_company' }
+        end
+      DOC
+    end
+    let(:client_company_serializer_content) do
+      <<~DOC
+        class ClientCompany::V1::ClientCompany
+          def initialize
+            @client_company = ClientCompany.new
+          end
+        end
+      DOC
+    end
+    let(:other_content) { 'other' }
+    let(:foo_content) { 'client_company' }
 
-      before do
-        FileUtils.mkdir_p './client_company_manager/'
+    before do
+      FileUtils.mkdir_p './app/client_company_manager/'
+      FileUtils.mkdir_p './app/serializers/client_company/v1'
 
-        File.open('./client_company_manager/other.rb', 'w') { |f| f.write other_content }
-        File.open('./client_company_manager/client_company.rb', 'w') { |f| f.write client_company_content }
-        File.open('./foo.rb', 'w') { |f| f.write foo_content }
+      File.open('./app/client_company_manager/other.rb', 'w') { |f| f.write other_content }
+      File.open('./app/client_company_manager/client_company.rb', 'w') { |f| f.write client_company_content }
+      File.open('./app/serializers/client_company/v1/client_company.rb', 'w') { |f| f.write client_company_serializer_content }
+      File.open('./app/foo.rb', 'w') { |f| f.write foo_content }
 
-        Rename.new('ClientCompany', 'Account').rename_files_and_directories
-      end
-
-      it 'renames the directories' do
-        expect(File.directory?('./client_company_manager')).to eq false
-      end
-
-      it 'renames files' do
-        expect(File.exist?('./account_manager/account.rb')).to be true
-        expect(File.exist?('./account_manager/other.rb')).to be true
-        expect(File.exist?('./foo.rb')).to be true
-      end
-
-      it 'does not modify the file content' do
-        expect(File.read('./foo.rb')).to eq(foo_content)
-        expect(File.read('./account_manager/other.rb')).to eq(other_content)
-        expect(File.read('./account_manager/account.rb')).to eq(client_company_content)
-      end
+      Rename.new('ClientCompany', 'Account').rename_files_and_directories
     end
 
-    describe '#rename_in_files' do
-      let(:client_company_content) do
-        <<~DOC
-          class ClientCompany
-          end
-        DOC
-      end
-      let(:client_company_manager_content) do
-        <<~DOC
-          class ClientCompanyManager::ClientCompany
-          end
-        DOC
-      end
-      let(:account_content) do
-        <<~DOC
-          class Account
-          end
-        DOC
-      end
-      let(:account_manager_content) do
-        <<~DOC
-          class AccountManager::Account
-          end
-        DOC
-      end
+    it 'renames the directories' do
+      expect(File.directory?('./app/client_company_manager')).to eq false
+      expect(File.directory?('./app/serializers/client_company/v1')).to eq false
+    end
 
-      before do
-        FileUtils.mkdir_p './client_company_manager'
+    it 'renames files' do
+      expect(File.exist?('./app/serializers/account/v1/account.rb')).to be true
+      expect(File.exist?('./app/account_manager/account.rb')).to be true
+      expect(File.exist?('./app/account_manager/other.rb')).to be true
+      expect(File.exist?('./app/foo.rb')).to be true
+    end
 
-        File.open('./client_company_manager/client_company.rb', 'w') { |f| f.write client_company_manager_content }
-        File.open('./client_company.rb', 'w') { |f| f.write client_company_content }
+    it 'does not modify the file content' do
+      expect(File.read('./app/foo.rb')).to eq(foo_content)
+      expect(File.read('./app/account_manager/other.rb')).to eq(other_content)
+      expect(File.read('./app/account_manager/account.rb')).to eq(client_company_content)
+      expect(File.read('./app/serializers/account/v1/account.rb')).to eq(client_company_serializer_content)
+    end
+  end
 
-        Rename.new('ClientCompany', 'Account').rename_in_files
-      end
+  describe '#rename_in_files' do
+    let(:client_company_content) do
+      <<~DOC
+        class ClientCompany
+        end
+      DOC
+    end
+    let(:client_company_manager_content) do
+      <<~DOC
+        class ClientCompanyManager::ClientCompany
+        end
+      DOC
+    end
+    let(:account_content) do
+      <<~DOC
+        class Account
+        end
+      DOC
+    end
+    let(:account_manager_content) do
+      <<~DOC
+        class AccountManager::Account
+        end
+      DOC
+    end
 
-      it 'does not modify the directories or file names' do
-        expect(File.exist?('./client_company.rb')).to be true
-        expect(File.exist?('./client_company_manager/client_company.rb')).to be true
-      end
+    before do
+      FileUtils.mkdir_p './client_company_manager'
 
-      it 'renames inside the file' do
-        expect(File.read('./client_company.rb')).to eq account_content
-        expect(File.read('./client_company_manager/client_company.rb')).to eq account_manager_content
-      end
+      File.open('./client_company_manager/client_company.rb', 'w') { |f| f.write client_company_manager_content }
+      File.open('./client_company.rb', 'w') { |f| f.write client_company_content }
+
+      Rename.new('ClientCompany', 'Account').rename_in_files
+    end
+
+    it 'does not modify the directories or file names' do
+      expect(File.exist?('./client_company.rb')).to be true
+      expect(File.exist?('./client_company_manager/client_company.rb')).to be true
+    end
+
+    it 'renames inside the file' do
+      expect(File.read('./client_company.rb')).to eq account_content
+      expect(File.read('./client_company_manager/client_company.rb')).to eq account_manager_content
     end
   end
 end

@@ -10,28 +10,29 @@ class Rename
     'rake', 'json', 'sh', 'yaml', 'sql', 'yml', 'csv'
   ].map(&:freeze)
 
-  def initialize old_name, new_name, opts = {}
+  DEFAULT_PATH = '.'
+
+  def initialize old_name, new_name, ignore_paths: [], path: DEFAULT_PATH
     @variations_generator = VariationsGenerator.new(old_name, new_name)
-    @opts = opts
+    @ignore_paths = ignore_paths
+    @path = path
   end
 
-  def rename_and_generate_migrations
-    rename
+  def run
+    rename_files_and_directories @path
+    rename_in_files
     generate_migrations
   end
 
-  def rename
-    rename_files_and_directories
-    rename_in_files
-  end
-
-  def generate_migrations
-    MigrationGenerator.new(@variations_generator.underscore_variations).create_migration_file
-  end
-
-  def rename_files_and_directories
-    rename_files
-    rename_directories
+  def rename_files_and_directories path = @path
+    Dir["#{path}/*"].reject { |path| ignore_file? path }.each do |path|
+      if File.directory?(path)
+        rename_files_and_directories path
+      else
+        rename_path path
+      end
+    end
+    rename_path path
   end
 
   def rename_in_files
@@ -40,7 +41,18 @@ class Rename
     end
   end
 
+  def generate_migrations
+    MigrationGenerator.new(@variations_generator.underscore_variations).create_migration_file
+  end
+
   private
+
+  def rename_path filepath
+    variation_pairs.each do |old_name, new_name|
+      next unless File.basename(filepath).include? old_name
+      FileUtils.mv filepath, File.dirname(filepath) + "/#{File.basename(filepath).gsub(old_name, new_name)}"
+    end
+  end
 
   def variation_pairs
     @variation_pairs ||= @variations_generator.pairs_to_convert
@@ -48,7 +60,7 @@ class Rename
 
   def all_filepaths
     Find.find('.').to_a.reject do |path|
-      FileTest.directory?(path) || !acceptable_filetype?(path) || ignore_file?(path) || !File.file?(path)
+      FileTest.directory?(path) || !acceptable_filetype?(path) || ignore_file?(path)
     end
   end
 
@@ -57,7 +69,7 @@ class Rename
   end
 
   def ignore_file? path
-    Array(@opts[:ignore_paths]).any? do |ignore_path|
+    @ignore_paths.any? do |ignore_path|
       path.include? ignore_path
     end
   end
@@ -73,21 +85,6 @@ class Rename
     if old_text.include? old_string
       new_text = old_text.gsub(old_string, new_string)
       File.open(filepath, "w") { |file| file.puts new_text }
-    end
-  end
-
-  def rename_files
-    all_filepaths.product(variation_pairs).each do |filepath, (old_name, new_name)|
-      next unless File.basename(filepath).include? old_name
-      filename = File.basename(filepath)
-      File.rename filepath, filepath.gsub(filename, filename.gsub(old_name, new_name))
-    end
-  end
-
-  def rename_directories
-    all_filepaths.product(variation_pairs).each do |filepath, (old_name, new_name)|
-      next unless File.file?(filepath) && File.dirname(filepath).include?(old_name)
-      FileUtils.mv File.dirname(filepath), File.dirname(filepath).gsub(old_name, new_name)
     end
   end
 end
