@@ -16,6 +16,7 @@
 
 require 'model_renamer'
 require 'memfs'
+require 'pry'
 
 RSpec.configure do |config|
   # rspec-expectations config goes here. You can use an alternate
