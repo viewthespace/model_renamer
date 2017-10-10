@@ -29,9 +29,16 @@ class Rename
   end
 
   def rename_files
+    all_filepaths.each do |filepath|
+      rename_file filepath
+    end
+
+    all_filepaths.each do |filepath|
+      rename_directory filepath
+    end
   end
 
-  def replace_files_contents
+  def rename_in_files
   end
 
   private
@@ -41,6 +48,10 @@ class Rename
       replace_all_variations_in_file filepath
       rename_file filepath
     end
+
+    all_filepaths.each do |filepath|
+      rename_directory filepath
+    end
   end
 
   def variation_pairs
@@ -49,7 +60,7 @@ class Rename
 
   def all_filepaths
     Find.find('.').to_a.reject do |path|
-      FileTest.directory?(path) || !acceptable_filetype?(path) || ignore_file?(path)
+      FileTest.directory?(path) || !acceptable_filetype?(path) || ignore_file?(path) || !File.file?(path)
     end
   end
 
@@ -78,16 +89,18 @@ class Rename
   end
 
   def rename_file filepath
-    variation_pairs.each do |variation|
-      create_directory filepath, variation[0], variation[1]
-      File.rename(filepath, filepath.gsub(variation[0], variation[1])) if File.file?(filepath)
+    variation_pairs.each do |old_name, new_name|
+      next unless File.basename(filepath).include? old_name
+      filename = File.basename(filepath)
+      File.rename filepath, filepath.gsub(filename, filename.gsub(old_name, new_name))
+      break
     end
   end
 
-  def create_directory filepath, old_name, new_name
-    if File.dirname(filepath).include? old_name
-      FileUtils.mkdir_p File.dirname(filepath).gsub(old_name, new_name)
+  def rename_directory filepath
+    variation_pairs.each do |old_name, new_name|
+      next unless File.file?(filepath) && File.dirname(filepath).include?(old_name)
+      FileUtils.mv File.dirname(filepath), File.dirname(filepath).gsub(old_name, new_name)
     end
   end
-
 end

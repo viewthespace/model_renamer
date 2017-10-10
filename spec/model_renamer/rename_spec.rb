@@ -3,7 +3,7 @@ describe Rename do
     MemFs.activate { example.run }
   end
 
-  describe 'rename ClientCompany to Account' do
+  describe '#rename' do
     let(:client_company_model_content) do
       <<~HEREDOC
         class ClientCompany
@@ -173,6 +173,11 @@ describe Rename do
       Rename.new("ClientCompany", "Account").rename
     end
 
+    it 'renames the directories' do
+      expect(File.directory?('./app/assets/javascripts/horse/services/client-company-manager')).to be false
+      expect(File.directory?('./app/services/client_company_manager')).to be false
+    end
+
     it 'renames the file' do
       expect(File.exist?('./app/models/account.rb')).to be true
       expect(File.exist?('./app/models/account_user.rb')).to be true
@@ -243,6 +248,46 @@ describe Rename do
       it 'does not touch the files in the ignore paths' do
         expect(File.exist?('./db/migrate/add_client_company_to_deals.rb')).to be true
         expect(File.read('./db/migrate/add_client_company_to_deals.rb')).to eq(client_company_migration_content)
+      end
+    end
+
+    describe '#rename_files' do
+      let(:client_company_content) do
+        <<~DOC
+          class ClientCompany
+            def initialize
+              @client_company = ClientCompany.new
+            end
+          end
+        DOC
+      end
+      let(:other_content) { 'other' }
+      let(:foo_content) { 'client_company' }
+
+      before do
+        FileUtils.mkdir_p './client_company_manager/'
+
+        File.open('./client_company_manager/other.rb', 'w') { |f| f.write other_content }
+        File.open('./client_company_manager/client_company.rb', 'w') { |f| f.write client_company_content }
+        File.open('./foo.rb', 'w') { |f| f.write foo_content }
+
+        Rename.new('ClientCompany', 'Account').rename_files
+      end
+
+      it 'renames the directories' do
+        expect(File.directory?('./client_company_manager')).to eq false
+      end
+
+      it 'renames files' do
+        expect(File.exist?('./account_manager/account.rb')).to be true
+        expect(File.exist?('./account_manager/other.rb')).to be true
+        expect(File.exist?('./foo.rb')).to be true
+      end
+
+      it 'does not modify the file content' do
+        expect(File.read('./foo.rb')).to eq(foo_content)
+        expect(File.read('./account_manager/other.rb')).to eq(other_content)
+        expect(File.read('./account_manager/account.rb')).to eq(client_company_content)
       end
     end
   end
