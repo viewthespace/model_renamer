@@ -39,6 +39,9 @@ class Rename
   end
 
   def rename_in_files
+    all_filepaths.each do |filepath|
+      replace_all_variations_in_file filepath
+    end
   end
 
   private

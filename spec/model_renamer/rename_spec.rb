@@ -290,5 +290,51 @@ describe Rename do
         expect(File.read('./account_manager/account.rb')).to eq(client_company_content)
       end
     end
+
+    describe '#rename_in_files' do
+      let(:client_company_content) do
+        <<~DOC
+          class ClientCompany
+          end
+        DOC
+      end
+      let(:client_company_manager_content) do
+        <<~DOC
+          class ClientCompanyManager::ClientCompany
+          end
+        DOC
+      end
+      let(:account_content) do
+        <<~DOC
+          class Account
+          end
+        DOC
+      end
+      let(:account_manager_content) do
+        <<~DOC
+          class AccountManager::Account
+          end
+        DOC
+      end
+
+      before do
+        FileUtils.mkdir_p './client_company_manager'
+
+        File.open('./client_company_manager/client_company.rb', 'w') { |f| f.write client_company_manager_content }
+        File.open('./client_company.rb', 'w') { |f| f.write client_company_content }
+
+        Rename.new('ClientCompany', 'Account').rename_in_files
+      end
+
+      it 'does not modify the directories or file names' do
+        expect(File.exist?('./client_company.rb')).to be true
+        expect(File.exist?('./client_company_manager/client_company.rb')).to be true
+      end
+
+      it 'renames inside the file' do
+        expect(File.read('./client_company.rb')).to eq account_content
+        expect(File.read('./client_company_manager/client_company.rb')).to eq account_manager_content
+      end
+    end
   end
 end
