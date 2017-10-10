@@ -28,6 +28,12 @@ class Rename
     MigrationGenerator.new(@variations_generator.underscore_variations).create_migration_file
   end
 
+  def rename_files
+  end
+
+  def replace_files_contents
+  end
+
   private
 
   def replace_all_occurrences

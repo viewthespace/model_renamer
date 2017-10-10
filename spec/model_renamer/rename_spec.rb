@@ -4,35 +4,35 @@ describe Rename do
   end
 
   describe 'rename ClientCompany to Account' do
-    def client_company_model_content
+    let(:client_company_model_content) do
       <<~HEREDOC
         class ClientCompany
         end
       HEREDOC
     end
 
-    def client_company_controller_content
+    let(:client_company_controller_content) do
       <<~HEREDOC
         class ClientCompanyController < ApplicationController
         end
       HEREDOC
     end
 
-    def account_model_content
+    let(:account_model_content) do
       <<~HEREDOC
         class Account
         end
       HEREDOC
     end
 
-    def account_controller_content
+    let(:account_controller_content) do
       <<~HEREDOC
         class AccountController < ApplicationController
         end
       HEREDOC
     end
 
-    def client_company_manager_import_users_service_content
+    let(:client_company_manager_import_users_service_content) do
       <<~HEREDOC
         class ClientCompanyManager::ImportUsersService
           def initialize client_company
@@ -42,7 +42,7 @@ describe Rename do
       HEREDOC
     end
 
-    def account_manager_import_users_service_content
+    let(:account_manager_import_users_service_content) do
       <<~HEREDOC
         class AccountManager::ImportUsersService
           def initialize account
@@ -52,7 +52,7 @@ describe Rename do
       HEREDOC
     end
 
-    def client_company_user_model_content
+    let(:client_company_user_model_content) do
       <<~HEREDOC
         class ClientCompanyUser < ActiveRecord::Base
           belongs_to :client_company
@@ -61,7 +61,7 @@ describe Rename do
       HEREDOC
     end
 
-    def account_user_model_content
+    let(:account_user_model_content) do
       <<~HEREDOC
         class AccountUser < ActiveRecord::Base
           belongs_to :account
@@ -70,7 +70,7 @@ describe Rename do
       HEREDOC
     end
 
-    def client_company_service_js_content
+    let(:client_company_service_js_content) do
       <<~HEREDOC
         angular.module("vts").factory("ClientCompanyService", (DataCache, queryStringSerializer) => {
           return new (class ClientCompanyService extends DataCache {
@@ -102,7 +102,7 @@ describe Rename do
       HEREDOC
     end
 
-    def account_service_js_content
+    let(:account_service_js_content) do
       <<~HEREDOC
         angular.module("vts").factory("AccountService", (DataCache, queryStringSerializer) => {
           return new (class AccountService extends DataCache {
@@ -134,7 +134,7 @@ describe Rename do
       HEREDOC
     end
 
-    def client_company_manager_translation_yml_content
+    let(:client_company_manager_translation_yml_content) do
       <<~HEREDOC
         en-us:
           views:
@@ -145,7 +145,7 @@ describe Rename do
       HEREDOC
     end
 
-    def account_manager_translation_yml_content
+    let(:account_manager_translation_yml_content) do
       <<~HEREDOC
         en-us:
           views:
@@ -193,7 +193,7 @@ describe Rename do
   end
 
   describe 'options hash' do
-    def client_company_migration_content
+    let(:client_company_migration_content) do
       <<~HEREDOC
         class AddClientCompanyToDeals < ActiveRecord::Migration
           def change
@@ -203,7 +203,7 @@ describe Rename do
       HEREDOC
     end
 
-    def account_migration_content
+    let(:account_migration_content) do
       <<~HEREDOC
         class AddAccountToDeals < ActiveRecord::Migration
           def change
