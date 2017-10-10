@@ -21,21 +21,17 @@ class Rename
   end
 
   def rename
-    replace_all_occurrences
+    rename_files_and_directories
+    rename_in_files
   end
 
   def generate_migrations
     MigrationGenerator.new(@variations_generator.underscore_variations).create_migration_file
   end
 
-  def rename_files
-    all_filepaths.each do |filepath|
-      rename_file filepath
-    end
-
-    all_filepaths.each do |filepath|
-      rename_directory filepath
-    end
+  def rename_files_and_directories
+    rename_files
+    rename_directories
   end
 
   def rename_in_files
@@ -45,17 +41,6 @@ class Rename
   end
 
   private
-
-  def replace_all_occurrences
-    all_filepaths.each do |filepath|
-      replace_all_variations_in_file filepath
-      rename_file filepath
-    end
-
-    all_filepaths.each do |filepath|
-      rename_directory filepath
-    end
-  end
 
   def variation_pairs
     @variation_pairs ||= @variations_generator.pairs_to_convert
@@ -91,17 +76,16 @@ class Rename
     end
   end
 
-  def rename_file filepath
-    variation_pairs.each do |old_name, new_name|
+  def rename_files
+    all_filepaths.product(variation_pairs).each do |filepath, (old_name, new_name)|
       next unless File.basename(filepath).include? old_name
       filename = File.basename(filepath)
       File.rename filepath, filepath.gsub(filename, filename.gsub(old_name, new_name))
-      break
     end
   end
 
-  def rename_directory filepath
-    variation_pairs.each do |old_name, new_name|
+  def rename_directories
+    all_filepaths.product(variation_pairs).each do |filepath, (old_name, new_name)|
       next unless File.file?(filepath) && File.dirname(filepath).include?(old_name)
       FileUtils.mv File.dirname(filepath), File.dirname(filepath).gsub(old_name, new_name)
     end

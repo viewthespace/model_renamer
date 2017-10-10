@@ -271,7 +271,7 @@ describe Rename do
         File.open('./client_company_manager/client_company.rb', 'w') { |f| f.write client_company_content }
         File.open('./foo.rb', 'w') { |f| f.write foo_content }
 
-        Rename.new('ClientCompany', 'Account').rename_files
+        Rename.new('ClientCompany', 'Account').rename_files_and_directories
       end
 
       it 'renames the directories' do
