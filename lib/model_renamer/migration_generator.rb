@@ -2,12 +2,13 @@
 # Generates a migration that renames columns and tables
 #
 class MigrationGenerator
-
   def initialize(old_name_plural:, new_name_plural:, old_name_singular:, new_name_singular:)
     @old_name_plural = old_name_plural
     @new_name_plural = new_name_plural
     @old_name_singular = old_name_singular
     @new_name_singular = new_name_singular
+    @old_name_classify = old_name_singular.classify
+    @new_name_classify = new_name_singular.classify
   end
 
   def create_migration_file
@@ -46,9 +47,33 @@ end
   #   ...
   # ]
   def rename_statements
-    @rename_statements ||= tables_hash.map do |table_name, columns|
-      columns.map { |column| rename_column(table_name, column) } << rename_table(table_name)
+    @rename_statements ||= tables_hash.each_with_object([]) do |(table_name, columns), arr|
+      arr << columns.map { |column| rename_column_defaults(table_name) }
+      arr << columns.map { |column| rename_column(table_name, column) }
+      arr << rename_table(table_name)
     end.flatten.compact
+  end
+
+  def rename_column_defaults table_name
+    table_name.classify.constantize.column_defaults.map do |column_name, default|
+      default = default.to_s
+      if default.include?(@old_name_plural)
+"""if table_exists?(:#{table_name}) && column_exists?(:#{table_name}, :#{column_name})
+      change_column_default :#{table_name}, :#{column_name}, '#{default.gsub(@old_name_plural, @new_name_plural)}'
+    end
+"""
+      elsif default.to_s.include?(@old_name_singular)
+"""if table_exists?(:#{table_name}) && column_exists?(:#{table_name}, :#{column_name})
+      change_column_default :#{table_name}, :#{column_name}, '#{default.gsub(@old_name_singular, @new_name_singular)}'
+    end
+"""
+      elsif default.include?(@old_name_classify)
+"""if table_exists?(:#{table_name}) && column_exists?(:#{table_name}, :#{column_name})
+      change_column_default :#{table_name}, :#{column_name}, '#{default.gsub(@old_name_classify, @new_name_classify)}'
+    end
+"""
+      end
+    end
   end
 
   def rename_column table_name, column_name
@@ -78,5 +103,4 @@ end
 """
     end
   end
-
 end

@@ -8,7 +8,17 @@ describe MigrationGenerator do
       'client_companies' => ['id'],
       'client_company_users' => ['client_company_id'],
       'activity_logs' => ['client_company_id', 'last_modified_time'],
-      'spaces' => ['id']
+      'spaces' => ['id'],
+      'access_requests' => ['accessible_type']
+    }
+  end
+  let(:tables_and_column_defaults) do
+    {
+      'client_companies' => { 'id' => nil },
+      'client_company_users' => { 'client_company_id' => nil },
+      'activity_logs' => { 'client_company_id' => 1,  'last_modified_time' => Date.current },
+      'spaces' => { 'id' => nil },
+      'access_requests' => { 'accessible_type' => 'ClientCompany' }
     }
   end
   let(:params) do
@@ -39,6 +49,10 @@ describe MigrationGenerator do
             rename_column :activity_logs, :client_company_id, :account_id
           end
 
+          if table_exists?(:access_requests) && column_exists?(:access_requests, :accessible_type)
+            change_column_default :access_requests, :accessible_type, 'Account'
+          end
+
         end
       end
     CONTENT
@@ -48,6 +62,9 @@ describe MigrationGenerator do
     allow(ActiveRecord::Base).to receive_message_chain(:connection, :tables).and_return(tables_and_columns.keys)
     tables_and_columns.each do |table, cols|
       allow(ActiveRecord::Base).to receive_message_chain(:connection, :columns).with(table).and_return(cols.map{|col| double(name: col)})
+    end
+    tables_and_column_defaults.each do |table, defaults|
+      stub_const(table.classify, double(column_defaults: defaults))
     end
 
     described_class.new(params).create_migration_file
