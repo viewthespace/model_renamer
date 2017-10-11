@@ -10,18 +10,35 @@ class Rename
     'rake', 'json', 'sh', 'yaml', 'sql', 'yml', 'csv'
   ].map(&:freeze)
 
-  def initialize old_name, new_name, opts = {}
+  DEFAULT_PATH = '.'
+
+  def initialize old_name, new_name, ignore_paths: [], path: DEFAULT_PATH
     @variations_generator = VariationsGenerator.new(old_name, new_name)
-    @opts = opts
+    @ignore_paths = ignore_paths
+    @path = path
   end
 
-  def rename_and_generate_migrations
-    rename
+  def run
+    rename_files_and_directories @path
+    rename_in_files
     generate_migrations
   end
 
-  def rename
-    replace_all_occurrences
+  def rename_files_and_directories path = @path
+    Dir["#{path}/*"].reject { |path| ignore_file? path }.each do |path|
+      if File.directory?(path)
+        rename_files_and_directories path
+      else
+        rename_path path
+      end
+    end
+    rename_path path
+  end
+
+  def rename_in_files
+    all_filepaths.each do |filepath|
+      replace_all_variations_in_file filepath
+    end
   end
 
   def generate_migrations
@@ -30,10 +47,10 @@ class Rename
 
   private
 
-  def replace_all_occurrences
-    all_filepaths.each do |filepath|
-      replace_all_variations_in_file filepath
-      rename_file filepath
+  def rename_path filepath
+    variation_pairs.each do |old_name, new_name|
+      next unless File.basename(filepath).include? old_name
+      FileUtils.mv filepath, File.dirname(filepath) + "/#{File.basename(filepath).gsub(old_name, new_name)}"
     end
   end
 
@@ -52,7 +69,7 @@ class Rename
   end
 
   def ignore_file? path
-    Array(@opts[:ignore_paths]).any? do |ignore_path|
+    @ignore_paths.any? do |ignore_path|
       path.include? ignore_path
     end
   end
@@ -70,18 +87,4 @@ class Rename
       File.open(filepath, "w") { |file| file.puts new_text }
     end
   end
-
-  def rename_file filepath
-    variation_pairs.each do |variation|
-      create_directory filepath, variation[0], variation[1]
-      File.rename(filepath, filepath.gsub(variation[0], variation[1])) if File.file?(filepath)
-    end
-  end
-
-  def create_directory filepath, old_name, new_name
-    if File.dirname(filepath).include? old_name
-      FileUtils.mkdir_p File.dirname(filepath).gsub(old_name, new_name)
-    end
-  end
-
 end
