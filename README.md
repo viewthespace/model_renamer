@@ -1,5 +1,7 @@
 # ModelRenamer
 
+[![CircleCI](https://circleci.com/gh/viewthespace/model_renamer/tree/master.svg?style=svg)](https://circleci.com/gh/viewthespace/model_renamer/tree/master)
+
 The model renamer gem allows you to rename any a model in your rails application. The gem looks for occurrences of any variation or pluralization of the old model name and changes it to the corresponding variation of the new name. It also generates database migrations that rename tables and foreign keys referencing the old name.
 
 ## Installation
