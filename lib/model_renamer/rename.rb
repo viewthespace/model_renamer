@@ -24,15 +24,15 @@ class Rename
     generate_migrations
   end
 
-  def rename_files_and_directories path = @path
-    Dir["#{path}/*"].reject { |path| ignore_file? path }.each do |path|
-      if File.directory?(path)
-        rename_files_and_directories path
+  def rename_files_and_directories outer_path = @path
+    Dir["#{outer_path}/*"].reject { |path| ignore_file? path }.each do |inner_path|
+      if File.directory?(inner_path)
+        rename_files_and_directories inner_path
       else
-        rename_path path
+        rename_path inner_path
       end
     end
-    rename_path path
+    rename_path outer_path
   end
 
   def rename_in_files
@@ -47,10 +47,13 @@ class Rename
 
   private
 
-  def rename_path filepath
-    variation_pairs.each do |old_name, new_name|
-      next unless File.basename(filepath).include? old_name
-      FileUtils.mv filepath, File.dirname(filepath) + "/#{File.basename(filepath).gsub(old_name, new_name)}"
+  def rename_path initial_filepath
+    current_filepath = initial_filepath
+    variation_pairs.uniq.each do |old_name, new_name|
+      next unless File.basename(current_filepath).include? old_name
+      new_filepath = File.dirname(current_filepath) + "/#{File.basename(current_filepath).gsub(old_name, new_name)}"
+      FileUtils.mv current_filepath, new_filepath
+      current_filepath = new_filepath
     end
   end
 

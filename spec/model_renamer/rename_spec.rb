@@ -253,56 +253,113 @@ describe Rename do
   end
 
   describe '#rename_files' do
-    let(:client_company_content) do
-      <<~DOC
-        class ClientCompany
-          def initialize
-            @client_company = ClientCompany.new
+
+    context 'irregular pluralization' do
+      let(:client_company_content) do
+        <<~DOC
+          class ClientCompany
+            def initialize
+              @client_company = ClientCompany.new
+            end
           end
-        end
-      DOC
-    end
-    let(:client_company_serializer_content) do
-      <<~DOC
-        class ClientCompany::V1::ClientCompany
-          def initialize
-            @client_company = ClientCompany.new
+        DOC
+      end
+      let(:client_company_serializer_content) do
+        <<~DOC
+          class ClientCompany::V1::ClientCompany
+            def initialize
+              @client_company = ClientCompany.new
+            end
           end
-        end
-      DOC
+        DOC
+      end
+      let(:other_content) { 'other' }
+      let(:foo_content) { 'client_company' }
+
+      before do
+        FileUtils.mkdir_p './app/client_company_manager/'
+        FileUtils.mkdir_p './app/serializers/client_company/v1'
+
+        File.open('./app/client_company_manager/other.rb', 'w') { |f| f.write other_content }
+        File.open('./app/client_company_manager/client_company.rb', 'w') { |f| f.write client_company_content }
+        File.open('./app/serializers/client_company/v1/client_company.rb', 'w') { |f| f.write client_company_serializer_content }
+        File.open('./app/foo.rb', 'w') { |f| f.write foo_content }
+
+        Rename.new('ClientCompany', 'Account').rename_files_and_directories
+      end
+
+      it 'renames the directories' do
+        expect(File.directory?('./app/client_company_manager')).to eq false
+        expect(File.directory?('./app/serializers/client_company/v1')).to eq false
+      end
+
+      it 'renames files' do
+        expect(File.exist?('./app/serializers/account/v1/account.rb')).to be true
+        expect(File.exist?('./app/account_manager/account.rb')).to be true
+        expect(File.exist?('./app/account_manager/other.rb')).to be true
+        expect(File.exist?('./app/foo.rb')).to be true
+      end
+
+      it 'does not modify the file content' do
+        expect(File.read('./app/foo.rb')).to eq(foo_content)
+        expect(File.read('./app/account_manager/other.rb')).to eq(other_content)
+        expect(File.read('./app/account_manager/account.rb')).to eq(client_company_content)
+        expect(File.read('./app/serializers/account/v1/account.rb')).to eq(client_company_serializer_content)
+      end
     end
-    let(:other_content) { 'other' }
-    let(:foo_content) { 'client_company' }
 
-    before do
-      FileUtils.mkdir_p './app/client_company_manager/'
-      FileUtils.mkdir_p './app/serializers/client_company/v1'
+    context 'regular pluralization' do
+      let(:ticket_content) do
+        <<~DOC
+          class Ticket
+            def initialize
+              @ticket = Ticket.new
+            end
+          end
+        DOC
+      end
+      let(:ticket_serializer_content) do
+        <<~DOC
+          class Ticket::V1::Ticket
+            def initialize
+              @ticket = Ticket.new
+            end
+          end
+        DOC
+      end
+      let(:other_content) { 'other' }
+      let(:foo_content) { 'ticket' }
 
-      File.open('./app/client_company_manager/other.rb', 'w') { |f| f.write other_content }
-      File.open('./app/client_company_manager/client_company.rb', 'w') { |f| f.write client_company_content }
-      File.open('./app/serializers/client_company/v1/client_company.rb', 'w') { |f| f.write client_company_serializer_content }
-      File.open('./app/foo.rb', 'w') { |f| f.write foo_content }
+      before do
+        FileUtils.mkdir_p './app/ticket_manager/'
+        FileUtils.mkdir_p './app/serializers/tickets/v1'
 
-      Rename.new('ClientCompany', 'Account').rename_files_and_directories
-    end
+        File.open('./app/ticket_manager/other.rb', 'w') { |f| f.write other_content }
+        File.open('./app/ticket_manager/ticket.rb', 'w') { |f| f.write ticket_content }
+        File.open('./app/serializers/tickets/v1/ticket.rb', 'w') { |f| f.write ticket_serializer_content }
+        File.open('./app/foo.rb', 'w') { |f| f.write foo_content }
 
-    it 'renames the directories' do
-      expect(File.directory?('./app/client_company_manager')).to eq false
-      expect(File.directory?('./app/serializers/client_company/v1')).to eq false
-    end
+        Rename.new('Ticket', 'Case').rename_files_and_directories
+      end
 
-    it 'renames files' do
-      expect(File.exist?('./app/serializers/account/v1/account.rb')).to be true
-      expect(File.exist?('./app/account_manager/account.rb')).to be true
-      expect(File.exist?('./app/account_manager/other.rb')).to be true
-      expect(File.exist?('./app/foo.rb')).to be true
-    end
+      it 'renames the directories' do
+        expect(File.directory?('./app/ticket_manager')).to eq false
+        expect(File.directory?('./app/serializers/tickets/v1')).to eq false
+      end
 
-    it 'does not modify the file content' do
-      expect(File.read('./app/foo.rb')).to eq(foo_content)
-      expect(File.read('./app/account_manager/other.rb')).to eq(other_content)
-      expect(File.read('./app/account_manager/account.rb')).to eq(client_company_content)
-      expect(File.read('./app/serializers/account/v1/account.rb')).to eq(client_company_serializer_content)
+      it 'renames files' do
+        expect(File.exist?('./app/serializers/cases/v1/case.rb')).to be true
+        expect(File.exist?('./app/case_manager/case.rb')).to be true
+        expect(File.exist?('./app/case_manager/other.rb')).to be true
+        expect(File.exist?('./app/foo.rb')).to be true
+      end
+
+      it 'does not modify the file content' do
+        expect(File.read('./app/foo.rb')).to eq(foo_content)
+        expect(File.read('./app/case_manager/other.rb')).to eq(other_content)
+        expect(File.read('./app/case_manager/case.rb')).to eq(ticket_content)
+        expect(File.read('./app/serializers/cases/v1/case.rb')).to eq(ticket_serializer_content)
+      end
     end
   end
 
