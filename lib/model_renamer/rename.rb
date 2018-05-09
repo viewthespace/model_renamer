@@ -62,7 +62,7 @@ class Rename
   end
 
   def all_filepaths
-    Find.find('.').to_a.reject do |path|
+    Find.find(@path.presence || ".").to_a.reject do |path|
       FileTest.directory?(path) || !acceptable_filetype?(path) || ignore_file?(path)
     end
   end

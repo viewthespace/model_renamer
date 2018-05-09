@@ -226,6 +226,19 @@ describe Rename do
         end
       HEREDOC
     end
+    let(:client_company_model_content) do
+      <<~HEREDOC
+        class ClientCompany
+        end
+      HEREDOC
+    end
+    let(:account_model_content) do
+      <<~HEREDOC
+        class Account
+        end
+      HEREDOC
+    end
+
     let(:migration_generator_mock) { instance_double(MigrationGenerator) }
 
     before do
@@ -233,7 +246,9 @@ describe Rename do
       expect(MigrationGenerator).to receive(:new).and_return(migration_generator_mock)
 
       FileUtils.mkdir_p './db/migrate'
+      FileUtils.mkdir_p './app/models'
       File.open('./db/migrate/add_client_company_to_deals.rb', 'w') { |f| f.write client_company_migration_content }
+      File.open('./app/models/client_company.rb', 'w') { |f| f.write client_company_model_content }
     end
 
     context 'when ignore paths options are passed in' do
@@ -248,6 +263,24 @@ describe Rename do
       it 'does not touch the files in the ignore paths' do
         expect(File.exist?('./db/migrate/add_client_company_to_deals.rb')).to be true
         expect(File.read('./db/migrate/add_client_company_to_deals.rb')).to eq(client_company_migration_content)
+      end
+    end
+
+    context 'when path is specified' do
+      let(:path) { '/app' }
+
+      before do
+        Rename.new('ClientCompany', 'Account', path: path).run
+      end
+
+      it 'does not touch the files in the other paths' do
+        expect(File.exist?('./db/migrate/add_client_company_to_deals.rb')).to be true
+        expect(File.read('./db/migrate/add_client_company_to_deals.rb')).to eq(client_company_migration_content)
+      end
+
+      it 'renames and modifies the files in the specified path' do
+        expect(File.exist?('./app/models/account.rb')).to be true
+        expect(File.read('./app/models/account.rb')).to eq(account_model_content)
       end
     end
   end
