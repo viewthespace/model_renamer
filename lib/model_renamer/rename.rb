@@ -47,10 +47,13 @@ class Rename
 
   private
 
-  def rename_path filepath
-    variation_pairs.each do |old_name, new_name|
-      next unless File.basename(filepath).include? old_name
-      FileUtils.mv filepath, File.dirname(filepath) + "/#{File.basename(filepath).gsub(old_name, new_name)}"
+  def rename_path initial_filepath
+    current_filepath = initial_filepath
+    variation_pairs.uniq.each do |old_name, new_name|
+      next unless File.basename(current_filepath).include? old_name
+      new_filepath = File.dirname(current_filepath) + "/#{File.basename(current_filepath).gsub(old_name, new_name)}"
+      FileUtils.mv current_filepath, new_filepath
+      current_filepath = new_filepath
     end
   end
 
