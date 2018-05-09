@@ -24,15 +24,15 @@ class Rename
     generate_migrations
   end
 
-  def rename_files_and_directories path = @path
-    Dir["#{path}/*"].reject { |path| ignore_file? path }.each do |path|
-      if File.directory?(path)
-        rename_files_and_directories path
+  def rename_files_and_directories outer_path = @path
+    Dir["#{outer_path}/*"].reject { |path| ignore_file? path }.each do |inner_path|
+      if File.directory?(inner_path)
+        rename_files_and_directories inner_path
       else
-        rename_path path
+        rename_path inner_path
       end
     end
-    rename_path path
+    rename_path outer_path
   end
 
   def rename_in_files
